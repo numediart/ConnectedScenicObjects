@@ -94,6 +94,7 @@ Limited to 4 on a single object
 This type of device is intended to read rotary encoders inputs
 
 ![Rotary Encoders](https://i1.wp.com/www.how2electronics.com/wp-content/uploads/2019/03/Rotary-Encoder.png?ssl=1)
+
 *Rotary encoders wiring, image from [this great tutorial](https://www.how2electronics.com/construction-working-rotary-encoder/)*
 
 Constructor :
@@ -119,6 +120,20 @@ Examples of physical devices you can connect to :
 - Relay
 - LED
 - Enable input on DC motor driver
+
+Constructor :
+```
+DigitalOutputDevice(uint8_t pin, int startState = LOW);
+```
+
+- `pin` is the physical pin for the output. All available pins are suitable for Digital output
+- `startState` can be either LOW or HIGH. It is the initial state of the output when instancing the device.
+
+Declaration and adding it to a ConnectedScenicObject : 
+```cpp
+ConnectedScenicObjectError err;
+err += cso.addDevice(DIGITAL_OUTPUT, new DigitalOutputDevice(5));
+```
 
 
 ### PwmOutputDevice
@@ -166,6 +181,29 @@ err += cso.addDevice(ANALOG_OUTPUT, new AnalogOutputDevice(25));
 
 ### LedStripDevice
 Limited to 8 on a single object
+
+Drives a WS2812B led strip. The type of drivable LED can be changed in LedStripDevice.h, all types supported by FastLED library can be used. StatusLedDevice inherits from LedStripDevice with nbLeds set to 1 by default.
+Doesn't get along with AnalogOutputDevice.
+
+Constructor :
+```
+LedStripDevice(uint8_t pin, int nbLeds);
+```
+
+- `pin` is the physical pin for the data signal. Available pins are [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 25, 26, 27, 32, 33]
+- `nbLeds` is the length of the strip (e.g. the number of leds to drive)
+
+Declaration and adding it to a ConnectedScenicObject : 
+```cpp
+cso.init(STATUS_LED_PIN, LED_STRIP_LENGTH); // needed if using 3 or more LedStripDevice
+
+ConnectedScenicObjectError err;
+err += cso.addDevice(LED_STRIP, new LedStripDevice(LED_STRIP_PIN, LED_STRIP_LENGTH));
+```
+
+*NOTE 1: based on our experience, it appears that if you are using 3 or more strips, all the LedStripDevice must be declared with the same lenght. This includes the StatusLedDevice as shown in the code above*
+
+*NOTE 2: FastLED.setBrightness(FASTLED_MAX_BRIGHTNESS) will affect all the LedStripDevice, including the StatusLedDevice*
 
 ### AccelGyroDevice
 Limited to 1 on a single object

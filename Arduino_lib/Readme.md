@@ -14,7 +14,7 @@ Some of them have been forked and slightly modified to work within this project 
 Others can be installed from Arduino IDE Libraries Manager or directly from Github if you want to have the latest version.
 
 ### Unmodified
-You can either install them from Github links, from this folder or from Arduino IDE Libraries Manager if available
+You can either install them from Github links<or from Arduino IDE Libraries Manager if available
 
 * [FastLED](https://github.com/FastLED/FastLED) by Daniel Garcia, under MIT License
 * [RunningAverage](https://github.com/RobTillaart/Arduino/tree/master/libraries/RunningAverage) and [RunningMedian](https://github.com/RobTillaart/Arduino/tree/master/libraries/RunningMedian) by Rob Tillaart, under MIT License

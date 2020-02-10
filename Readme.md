@@ -56,7 +56,7 @@ This is a module given in Example folder and called ControllerTestModule. it onl
 * One or more ESP32 boards (one per object)
 * [Arduino IDE](https://www.arduino.cc/en/main/software) 1.8.5 or later 
 with [ESP32 boards support](https://github.com/espressif/arduino-esp32#installation-instructions)
-* *ConnectScenicObject* and third party librairies following the [Arduino_libs/Readme](Arduino_libs/Readme.md) instructions
+* *ConnectScenicObject* and third party librairies following the [Arduino_libs/Readme](Arduino_libs/) instructions
 * At least one WS2812B 5V programmable LED (status LED)
 * Some devices according to your needs (buttons, potentiometers, relays, LEDs, softPots, WS2812B strips...)
 * A way to power the ESP32 board and possibly your devices (battery or power adapter)

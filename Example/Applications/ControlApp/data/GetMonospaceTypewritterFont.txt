@@ -1,0 +1,3 @@
+Please download MonospaceTypewriter font from 
+https://allfont.net/download/monospacetypewriter/
+and extract the file named MonoSpaceTypewriter.ttf here

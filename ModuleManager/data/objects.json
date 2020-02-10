@@ -1,0 +1,28 @@
+[
+  {
+    "id": 0,
+    "type": "ActivatorTestModule",
+    "ports": [12001],
+    "mac": "A4:CF:12:13:96:88",
+    "hardware": {
+      "status_led": 1,
+      "digital_output": 4,
+      "analog_output": 1,
+      "pwm_output": 2,
+      "ledstrip": 1
+    }
+  },
+  {
+    "id": 0,
+    "type": "ControllerTestModule",
+    "ports": [12002],
+    "mac": "A4:CF:12:12:C7:A0",
+    "hardware": {
+      "status_led": 1,
+      "rotary_encoder": 1,
+      "digital_input": 4,
+      "analog_input": 2,
+      "touch_input": 4
+    }
+  }
+]

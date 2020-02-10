@@ -1,0 +1,20 @@
+[
+  {
+    "name": "ControllerTestModule",
+    "dict": {
+		"digital_input": 4,
+		"touch_input": 4,
+		"analog_input": 2,
+		"rotary_encoder": 1
+	}
+  },
+  {
+    "name": "ActivatorTestModule",
+    "dict": {
+		"digital_output": 4, 
+		"pwm_output": 2,
+		"analog_output": 1,
+		"ledstrip": 1
+		}
+  }
+]

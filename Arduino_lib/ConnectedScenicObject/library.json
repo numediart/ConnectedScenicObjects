@@ -1,0 +1,20 @@
+{
+    "name": "ConnectScenicObject",
+    "keywords": "osc,wifi,",
+    "description": "Easy way to interact between devices on ESP32 and computer over OSC (WiFi)",
+    "repository":
+    {
+        "type": "git",
+        "url": ""
+    },
+    "authors":
+    {
+        "name": "Numediart",
+        "url": "https://github.com/numediart",
+        "maintainer": true
+    },
+    "version": "0.1.0",
+    "license": "LGPL v2.1",
+    "frameworks": "arduino",
+    "platforms": "esp32"
+}

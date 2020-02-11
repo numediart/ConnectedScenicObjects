@@ -262,9 +262,9 @@ object, followed by the id and the "object message" itself.
 For example, an application expecting digital_input 
 messages from the object of type *ButtonBox* and id *1* will expect something like
 
-`/ButtonBox/1/digital_input i i (Id, State)`
+`/ButtonBox/1/digital_input i i (DeviceIdOnModule, State)`
 
-An application which intend to modify the value of a PWM output on a device of type *ServoController* of id *0*
+An application which intend to modify the value of a PWM device on a module of type *ServoController* of id *0*
 will send this message :
 
-`/ServoController/0/device/pwm_output/set  i f (Id, Value) `
+`/ServoController/0/device/pwm_output/set  i f (DeviceIdOnModule, Value) `

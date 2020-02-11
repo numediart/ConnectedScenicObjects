@@ -408,6 +408,8 @@ void loop()
 ```
 
 ###  Accelerometer / Gyroscope (MPU6050) example
+It is assumed that a file called *mpu.calib* containing the calibration data for the accelerometer is in the SPIFFS on the ESP32 as explained in [this section](#calibration-file).
+
 ```cpp
 #include <WiFi.h>
 #include <FS.h>
@@ -468,7 +470,253 @@ void loop()
 ```
 
 ## Creating your own devices
+You can create your own devices by inheritance from an already implemented Device class if the behaviour of your device is just an extension something already implemented or by inheritance from the *GenericDevice* class.
 
+Create two files next to your \*.ino file. For example, *MyExtendedDevice.h* and *MyExtendedDevice.cpp*.
+
+In *MyExtendedDevice.h*:
+- include the header from the class you want to inherit from
+- declare the constructor as public method
+- declare the functions to override as public virtual methods with the same signature as in the super class
+
+In *MyExtendedDevice.cpp*:
+- implement the constructor (with a call to the super class constructor in the initializer list if inheriting from already implemented class - not GenericDevice)
+- implement the functions to override
+
+In the \*.ino file:
+- include the header of your class: 
+
+`#include "MyExtendedDevice.h"`
+- add devices as you would do with the other devices:
+
+`err += cso.addDevice(BASE_TYPE, new MyExtendedDevice(PIN, [OTHER_PARAMETERS]));`
+
+*NOTE :* **BASE_TYPE** *is the type of device from the super class (e.g. DIGITAL_INPUT, ANALOG_INPUT, TOUCH_INPUT, ROTARY_ENCODER, DIGITAL_OUTPUT, PWM_OUTPUT, ANALOG_OUTPUT, LED_STRIP, ACCEL_GYRO or STATUS_LED). If you create your device by inheriting from GenericDevice class, check the section below.*
+
+### Inherit from GenericDevice
+In that case, you will need to modify the ConnectedScenicObject library itself.
+
+Create two files in the library folder, next to *ConnectedScenicObject.h*. For example, *MyExtendedDevice.h* and *MyExtendedDevice.cpp*.
+
+Implement the code has explained above. You **need to implement** at least : 
+- the constructor
+- `virtual void init();`
+- `virtual OscMessage update();`
+- `virtual void oscCallback(OscMessage& m);`
+- `virtual std::vector<int> usedPins();`
+
+In *ConnectedScenicObject.h*:
+- include the header of your class
+- add an identifier for your device in the `DeviceType` enum, right before `NB_DEVICE_TYPES`
+
+In *ConnectedScenicObject.cpp*:
+- add a type name string for your device at the end of the array `ConnectedScenicObject::deviceTypeNames[NB_DEVICE_TYPES]`
+- add a maximum instances number for your device at the end of the array `ConnectedScenicObject::deviceTypeMaxInstances[NB_DEVICE_TYPES]`
+- if your device is dependant on special physical pins, add definition of these pins in *AvailableDevicePins.h* and create a rule in `ConnectedScenicObject::addDevice` method.
+
+#### Example : HologramStrip
+This class inherits from LedStripDevice and implements / overrides more OSC-controlled fonctionality. It is intended to control led strips on rotating structure in order to create a hologram effect.
+
+*HologramStrip.h*
+```cpp
+#ifndef HOLOGRAM_STRIP_H
+#define HOLOGRAM_STRIP_H
+
+#include "LedStripDevice.h"
+
+
+class HologramStrip: public LedStripDevice {
+  private:
+    int _realNbLeds;
+    float _fps;
+    uint32_t _lastFrameMicros;
+    
+    CRGBPalette16 _palette;
+    TBlendType _blending;
+    int _paletteIndex;
+
+    CRGB _animationColor;
+    int _animationIndex;
+    int _animationPhase;
+    
+  public:
+    HologramStrip(uint8_t pin, int nbLeds, float fps = 100);
+    virtual OscMessage update();
+    virtual void oscCallback(OscMessage& m);
+};
+
+#endif
+```
+
+*HologramStrip.cpp*
+```cpp
+#include "HologramStrip.h"
+
+
+
+HologramStrip::HologramStrip(uint8_t pin, int nbLeds, float fps):
+    LedStripDevice(pin, nbLeds), _realNbLeds(nbLeds), _fps(fps), _blending(NOBLEND), _paletteIndex(-1), 
+    _animationColor(CRGB::Red), _animationIndex(-1), _animationPhase(-1)
+{
+  fill_solid( _palette, 16, CRGB::Black);
+}
+
+
+
+OscMessage HologramStrip::update() {
+  uint32_t m = micros();
+  if(m - _lastFrameMicros > 1000000.0f / _fps) {
+    _lastFrameMicros = m;
+    if(_paletteIndex >= 0) {
+      uint8_t colorIndex = _paletteIndex;
+      for( int i = 0; i < _realNbLeds; i++) {
+          _leds[i] = ColorFromPalette( _palette, colorIndex, 255, _blending);
+          colorIndex += 3;
+      }
+      _paletteIndex++;
+      if(_paletteIndex > 255) {
+        _paletteIndex = 0;
+      }
+    }
+    
+    else if( _animationPhase >= 0) {
+      // increase fps with limit at 4 x _nbLeds (0.25 second to update all the ledstrip)
+      _fps += 0.5;
+      if(_fps > 4 *_realNbLeds) _fps = 4 * _realNbLeds;
+      // play animation
+      if(_animationPhase == 0) { // light leds one by one
+        if(_animationIndex >= 0) _leds[_animationIndex] = CRGB::Black;
+        _animationIndex++;
+        if(_animationIndex >= _realNbLeds) {
+          _animationIndex--;
+          _animationPhase++;
+        }
+        _leds[_animationIndex] = _animationColor;
+      }
+      else if(_animationPhase == 1) {
+        _animationIndex--;
+        if(_animationIndex <= 0) {
+          _animationIndex = 0;
+          _animationPhase = 2;
+        }
+        _leds[_animationIndex] = _animationColor; 
+      }
+      else if(_animationPhase == 2) {
+        _animationIndex++;
+        if(_animationIndex >= _realNbLeds) {
+          _animationIndex = _realNbLeds - 1;
+          _animationPhase = 1;
+        }
+        _leds[_animationIndex] = _animationColor; 
+      }
+    }
+  }
+  return LedStripDevice::update();
+}
+
+
+
+void HologramStrip::oscCallback(OscMessage& m) {
+  if(ArduinoOSC::match("/device/ledstrip/clear", m.address())) {
+    if(m.typeTags() == "" || m.typeTags() == "i" && (m.arg<int>(0) == -1 || m.arg<int>(0) == _id)) {
+      fill_solid(_leds, _nbLeds, CRGB::Black);
+      fill_solid( _palette, 16, CRGB::Black);
+      _paletteIndex = -1;
+      _animationPhase = -1;
+    }
+  }
+  if(ArduinoOSC::match("/device/ledstrip/set_palette", m.address()) && m.typeTags().startsWith("is") && m.arg<int>(0) == _id) {
+    _paletteIndex = 0;
+    String paletteName = m.arg<String>(1);
+    paletteName.toLowerCase();
+    if(paletteName == "rainbow") {
+      _palette = RainbowColors_p;
+    }
+    else if(paletteName == "rainbowstripe") {
+      _palette = RainbowStripeColors_p;
+    }
+    else if(paletteName == "ocean") {
+      _palette = OceanColors_p;
+    }
+    else if(paletteName == "lava") {
+      _palette = LavaColors_p;
+    }
+    else if(paletteName == "forest") {
+      _palette = ForestColors_p;
+    }
+    else if(paletteName == "party") {
+      _palette = PartyColors_p;
+    }
+    else if(m.typeTags() == "isiiiiiiiiiiiiiiii"){
+      for(int i = 0; i < 16; i++) {
+        _palette[i] = CRGB(m.arg<int>(i+2));
+      }
+    }
+  }
+  if(ArduinoOSC::match("/device/ledstrip/set_blend", m.address()) && m.typeTags() == "ii" && m.arg<int>(0) == _id) {
+    int blending = m.arg<int>(1);
+    switch(blending) {
+      case 0:
+        _blending = NOBLEND;
+        break;
+      case 1:
+        _blending = LINEARBLEND;
+        break;
+      default:
+        break;
+    }
+  }
+  if(ArduinoOSC::match("/device/ledstrip/set_fps", m.address()) && m.typeTags() == "if" && m.arg<int>(0) == _id) {
+    float fps = m.arg<float>(1);
+    _fps = constrain(fps, 0.1, 400.0);
+  }
+  if(ArduinoOSC::match("/device/ledstrip/animate", m.address()) && m.typeTags().startsWith("i") && m.arg<int>(0) == _id) {
+    _animationIndex = -1;
+    _animationPhase = 0;
+    _fps = 2.0;
+    if(m.typeTags() == "ii") {
+      _realNbLeds = constrain(m.arg<int>(1), 0, _nbLeds);
+    }
+  }
+  if(ArduinoOSC::match("/device/ledstrip/set_animation_color", m.address()) && m.typeTags() == "ii" && m.arg<int>(0) == _id){
+    _animationColor = CRGB(m.arg<int>(1));
+  }
+  LedStripDevice::oscCallback(m);
+}
+```
+
+*Implementation in the ino file*
+```cpp
+#include "HologramStrip.h"
+
+#define STRIP_PIN 15
+#define LED_STRIP_LENGTH  30
+
+// ...
+
+setup() {
+  //...
+  ConnectedScenicObjectError err;
+  err += cso.addDevice(LED_STRIP, new HologramStrip(STRIP_PIN, LED_STRIP_LENGTH));
+  if(err.code) {
+    #ifdef SERIAL_DEBUG
+    Serial.println(err.message);
+    #endif
+    cso.setStatusLed(COLOR_WARNING);
+    delay(5000);
+  }
+  
+  cso.setStatusLed(COLOR_SETUP_OK);
+  #ifdef SERIAL_DEBUG
+  Serial.println(F("########   Setup OK   #########"));
+  #endif 
+}
+
+
+void loop() {
+  cso.update();
+}
+```
 
 ## License
 Copyright (c) 2019 [UMONS](https://web.umons.ac.be/en/) - [numediart](https://web.umons.ac.be/numediart/fr/accueil/) - [CLICK'](http://www.clicklivinglab.org/)

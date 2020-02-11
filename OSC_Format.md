@@ -87,7 +87,7 @@ This message will stop status led blinking.
 Messages between the objects and Applications running on the Conductor Computer. 
 Each time the word *Master* is used, it refers to one of the Applications.
 To handle one of theses messages, the object must implement the corresponding device.
-Refer to [this document](Arduino_libs/ConnectedScenicObject/README.md) for more information.
+Refer to [this document](Arduino_lib/ConnectedScenicObject/README.md) for more information.
 
 #### Digital Input device (limited to 16 per Object) 
 

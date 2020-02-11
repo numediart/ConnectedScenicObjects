@@ -124,7 +124,7 @@ if(err.code) {
 
 ## Create an application
 
-### What you will need
+For more information about how OSC messages are handled by the ModuleManager and the applications, check the [OSC Format documentation](OSC_Format.md).
 
 
 
